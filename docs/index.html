@@ -114,10 +114,10 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <p>So, if the application requires 2 external interrupts and an SPI interface, there are really only 3 PWM hardware signals available for additional control. As an example, for 2 DC motors with a PWM controller, 4 PWM signals are required, so we don't have enough hardware PWM pins to get the job done.</p>
 <p>One solution is to change hardware to a processor with more PWM pins. Another is to create a PWM solution that uses software to drive the pins.</p>
 <p>This second option is feasible, especially when the PWM signal needed is relatively low frequency. The downside is that the CPU is used process the timer interrupt and toggle the PWM digital output, taking processing time away from other tasks.</p>
-<p>The original use case for this library was for PWM speed control of brushed DC motors. These are actually too high to properly drive DC motors low duty cycles, as the current through the motor coils does not rise fast enough to provide motive force thgrough the motors. See this excellent summary from Adafruit <a href="https://learn.adafruit.com/improve-low-speed-performance-of-brushed-dc-motors/pwm-frequency">https://learn.adafruit.com/improve-low-speed-performance-of-brushed-dc-motors/pwm-frequency</a>.</p>
+<p>The original use case for this library was for PWM speed control of brushed DC motors. The default Arduino Uno/Nano PWM frequency is 490.2 Hz for pins 3, 9, 10, 11 and 976.56 Hz for pins 5 and 6. These frequencies are actually too high to properly drive DC motors at low duty cycles, as the current through the motor coils does not rise fast enough to provide motive force through the motors. See this excellent summary from Adafruit <a href="https://learn.adafruit.com/improve-low-speed-performance-of-brushed-dc-motors/pwm-frequency">https://learn.adafruit.com/improve-low-speed-performance-of-brushed-dc-motors/pwm-frequency</a>.</p>
 <h1>Implementation</h1>
-<p>The default Arduino Uno/Nano PWM frequency is 490.2 Hz for pins 3, 9, 10, 11 and 976.56 Hz for pins 5 and 6. This library implements user defined frequency PWM output for any digital pin software limited to MAX_FREQUENCY Hz.</p>
-<p>The TIMERn is set for 255 times this frequency (eg, 200Hz becomes 51kHz). This causes the TIMERn interrupt routine to be called 255 times for each PWM cycle and, depending on where it is in the cycle, allows the software to set the digital output pin to LOW or HIGH, thus creating the desired PWM signal. This is illuatrated below.</p>
+<p>This library implements user defined frequency PWM output for any digital pin software limited to MAX_FREQUENCY Hz.</p>
+<p>The TIMERn is set for 255 times this frequency (eg, 200Hz becomes 51kHz). This causes the TIMERn interrupt routine to be called 255 times for each PWM cycle and, depending on where it is in the cycle, allows the software to set the digital output pin to LOW or HIGH, thus creating the desired PWM signal. This is illustrated below.</p>
 <p><img src="PWM_Timing.png" alt="" class="inline" title="PWM Timing Diagram"/></p>
 <p>The duty cycle can be changed very smoothly by changing the set point at which the digital transition occurs. The new duty cycle takes effect at the next PWM digital transition.</p>
 <p>TIMERn is a global resource, so each object instance of class is driven from the same TIMERn interrupt. The constant MAX_PWM_PIN is used to set limits the global maximum for instances allowed to be processed by the interrupt.</p>
@@ -132,7 +132,7 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Mar 17 2021 11:19:14 for Software PWM by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Sat Mar 20 2021 09:24:52 for Software PWM by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>

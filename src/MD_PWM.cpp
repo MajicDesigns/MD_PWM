@@ -54,11 +54,6 @@ bool MD_PWM::begin(uint16_t freq)
   return(enable());
 }
 
-void MD_PWM::write(uint8_t duty)
-{
-  _pwmDuty = duty;
-}
-
 bool MD_PWM::enable(void)
 // Enable the PWM on the pin instance
 {
@@ -122,7 +117,7 @@ ISR(TIMER2_OVF_vect)
   }
 }
 
-void MD_PWM::setTimerMode(void)
+inline void MD_PWM::setTimerMode(void)
 {
 #if USE_TIMER == 1
   TCCR1B = _BV(WGM13);
@@ -185,7 +180,7 @@ void MD_PWM::setFrequency(uint32_t freq)
 #endif
 }
 
-void MD_PWM::attachISR(void)
+inline void MD_PWM::attachISR(void)
 // Start the timer and enable interrupt
 {
   // set timer overflow interrupt enable bit
@@ -199,7 +194,7 @@ void MD_PWM::attachISR(void)
   sei();                // interrupts globally enabled
 }
 
-void MD_PWM::detachISR(void)
+inline void MD_PWM::detachISR(void)
 // Stop the timer interrupt 
 {
   // clears timer overflow interrupt enable bit 
@@ -212,7 +207,7 @@ void MD_PWM::detachISR(void)
 #endif
 }
 
-void MD_PWM::stop(void)
+inline void MD_PWM::stop(void)
 // Stop the timer
 {
   // clears all clock selects bits

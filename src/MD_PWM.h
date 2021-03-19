@@ -44,22 +44,23 @@ timer interrupt and toggle the PWM digital output, taking processing time
 away from other tasks.
 
 The original use case for this library was for PWM speed control of brushed DC 
-motors. These are actually too high to properly drive DC motors low duty cycles, 
-as the current through the motor coils does not rise fast enough to provide 
-motive force thgrough the motors. See this excellent summary from Adafruit
+motors. The default Arduino Uno/Nano PWM frequency is 490.2 Hz for pins 3, 9,
+10, 11 and 976.56 Hz for pins 5 and 6. These frequencies are actually too high 
+to properly drive DC motors at low duty cycles, as the current through the 
+motor coils does not rise fast enough to provide motive force through the 
+motors. See this excellent summary from Adafruit
 https://learn.adafruit.com/improve-low-speed-performance-of-brushed-dc-motors/pwm-frequency.
 
 # Implementation
 
-The default Arduino Uno/Nano PWM frequency is 490.2 Hz for pins 3, 9,
-10, 11 and 976.56 Hz for pins 5 and 6. This library implements user defined 
-frequency PWM output for any digital pin software limited to MAX_FREQUENCY Hz.
+This library implements user defined frequency PWM output for any digital pin 
+software limited to MAX_FREQUENCY Hz.
 
 The TIMERn is set for 255 times this frequency (eg, 200Hz becomes 51kHz). This 
 causes the TIMERn interrupt routine to be called 255 times for each PWM cycle 
 and, depending on where it is in the cycle, allows the software to set the 
 digital output pin to LOW or HIGH, thus creating the desired PWM signal. 
-This is illuatrated below.
+This is illustrated below.
 
 ![PWM Timing Diagram] (PWM_Timing.png "PWM Timing Diagram")
 
@@ -98,7 +99,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
-Mar 2021 version 1.0.0
+Mar 2021 ver 1.0.1
+- Minor tweaks
+
+Mar 2021 ver 1.0.0
 - Initial release
  */
 
@@ -163,7 +167,7 @@ class MD_PWM
    * If all the instances of the class are closed, then the ISR is
    * disconnected and the timer is stopped.
    */
-  ~MD_PWM(void);
+    ~MD_PWM(void);
   /** @} */
 
   //--------------------------------------------------------------
@@ -196,7 +200,7 @@ class MD_PWM
    *
    * \param duty the PWM duty cycle [0..255].
    */
-    void write(uint8_t duty);
+    inline void write(uint8_t duty) { _pwmDuty = duty; }
 
   /**
    * Disable PWM output for this pin.
@@ -236,15 +240,15 @@ private:
     uint8_t _pwmDuty;     // PWM duty set point
     uint8_t _cycleCount;  // PWM current cycle count
 
-    void setTimerMode(void);          // set TIMER mode
     void setFrequency(uint32_t freq); // set TIMER frequency
-    void attachISR(void);             // attach to TIMER ISR
-    void detachISR(void);             // detach from TIMER ISR
-    void stop(void);                  // stop the timer
+    inline void setTimerMode(void);   // set TIMER mode
+    inline void attachISR(void);      // attach to TIMER ISR
+    inline void detachISR(void);      // detach from TIMER ISR
+    inline void stop(void);           // stop the timer
 
 public:
   static bool _bInitialised;          ///< ISR - Global vector initialization flag
-  static volatile uint8_t _pinCount;  ///< ISR - Number of pins current configured
+  static volatile uint8_t _pinCount;  ///< ISR - Number of pins currently configured
   static MD_PWM* _cbInstance[];       ///< ISR - Callback instance handle per pin slot
 
   //--------------------------------------------------------------

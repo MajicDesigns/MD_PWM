@@ -99,11 +99,15 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
+Apr 2021 ver 1.0.2
+- cyclecount and duty variables now volatile.
+
 Mar 2021 ver 1.0.1
 - Minor tweaks
 
 Mar 2021 ver 1.0.0
 - Initial release
+
  */
 
 #include <Arduino.h>
@@ -237,8 +241,8 @@ private:
 #endif
 
     uint8_t _pin;         // PWM digital pin
-    uint8_t _pwmDuty;     // PWM duty set point
-    uint8_t _cycleCount;  // PWM current cycle count
+    volatile uint8_t _pwmDuty;     // PWM duty set point
+    volatile uint8_t _cycleCount;  // PWM current cycle count
 
     void setFrequency(uint32_t freq); // set TIMER frequency
     inline void setTimerMode(void);   // set TIMER mode

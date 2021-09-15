@@ -99,6 +99,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
+Sep 2021 ver 1.0.3
+- disable() now called in destructor
+
 Apr 2021 ver 1.0.2
 - cyclecount and duty variables now volatile.
 
@@ -107,7 +110,6 @@ Mar 2021 ver 1.0.1
 
 Mar 2021 ver 1.0.0
 - Initial release
-
  */
 
 #include <Arduino.h>
@@ -154,9 +156,8 @@ class MD_PWM
    * Class Constructor
    *
    * Instantiate a new instance of the class.
-   * This variant is for motor controllers that have a PWM input for speed control.
-   * 
-   * The main function for the core object is to reset the internal
+   *
+   * The main function for the core object is to set the internal
    * shared variables and timers to default values.
    * 
    * \param pin pin number for this PWM output.
@@ -184,7 +185,7 @@ class MD_PWM
    * Initialize the object data. This needs to be called during setup() 
    * to set items that cannot be done during object creation.
    * 
-   * If this is the first instance of this class, then the ISR is code 
+   * If this is the first instance of this class, then the ISR code 
    * is initialized and the frequency of the hardware timer is set.
    * Subsequent instances do not affect the timer frequency.
    * 
@@ -222,7 +223,7 @@ class MD_PWM
    *
    * Starts PWM output for the pin related to this class instance.
    * The pin takes the next available slot allocated for the ISR [0..MAX_PWM_PINS].
-   * If no slots are available, then the methoid returns false.
+   * If no slots are available, then the method returns false.
    * 
    * \sa disable()
    * 
@@ -233,7 +234,7 @@ class MD_PWM
   /** @} */
 private:
 #if USE_TIMER == 1
-  static const uint32_t TIMER_RESOLUTION = 65535;    ///< Timer1 is 16 bit
+    static const uint32_t TIMER_RESOLUTION = 65535;    ///< Timer1 is 16 bit
 
 #elif USE_TIMER == 2
     static const uint32_t TIMER_RESOLUTION = 256;    ///< Timer2 is 8 bit
@@ -265,7 +266,7 @@ public:
    * Set the output PWM pin based on the current counter value. This is
    * called 255 times during each PWM cycle.
    * 
-   * This method is for only use by the TIMERn ISR.
+   * This method is for use only by the TIMERn ISR.
    */
    void setPin(void);
 

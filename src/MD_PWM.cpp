@@ -19,6 +19,7 @@ MD_PWM::MD_PWM(uint8_t pin) : _pin(pin)
 MD_PWM::~MD_PWM(void) 
 // Last one out the door turns out the lights
 { 
+  disable();
   if (_pinCount == 0)
   {
     stop();
@@ -64,10 +65,10 @@ bool MD_PWM::enable(void)
     if (_cbInstance[i] == nullptr)
     {
       found = true;
-      _cbInstance[i] = this;  // save ourtselves in this slot
+      _cbInstance[i] = this;  // save ourselves in this slot
       _pinCount++;        // one less pin to allocate
-      _cycleCount = 0;    // initialise the counter for the pin
-      write(0);           // initiliase the duty cycle
+      _cycleCount = 0;    // initialize the counter for the pin
+      write(0);           // initialize the duty cycle
       break;
     }
   }
@@ -83,7 +84,7 @@ void MD_PWM::disable(void)
     if (_cbInstance[i] == this)
     {
       _cbInstance[i] = nullptr;         // erase ourselves from the slot
-      if (_pinCount > 0) _pinCount--;   // one slot ius now free
+      if (_pinCount > 0) _pinCount--;   // one slot is now free
       break;
     }
   }
@@ -133,8 +134,8 @@ void MD_PWM::setFrequency(uint32_t freq)
 {
   uint8_t scale = 0;
 
-  // The counter runs backwards after TOP, interrupt is at BOTTOM 
-  // so divide cycles by 2
+  // The counter runs backwards after TOP, interrupt is at BOTTOM -
+  // so multiply frequency by 256 (<<8) divide cycles by 2
   uint32_t cycles = (F_CPU / (freq << 8))/2;
 
 #if USE_TIMER == 1

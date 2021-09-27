@@ -99,6 +99,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
+Sep 2021 ver xxx
+- Fixed reported glitch in setPin()
+
 Sep 2021 ver 1.0.3
 - disable() now called in destructor
 
@@ -205,7 +208,7 @@ class MD_PWM
    *
    * \param duty the PWM duty cycle [0..255].
    */
-    inline void write(uint8_t duty) { _pwmDuty = duty; }
+    inline void write(uint8_t duty) { _pwmDuty = duty; if(_cycleCount >= _pwmDuty) _cycleCount = _pwmDuty; }
 
   /**
    * Disable PWM output for this pin.

@@ -60,9 +60,9 @@ void MD_PWM::write(uint8_t duty)
   // The duty point may move to before our current cycle count.
   // In this case, we need to make some adjustments to the cycle count 
   // to compensate for the shift and try to keep somewhat smooth PWM output.
-  if (_cycleCount < _pwmDuty && // the current count has not yet caused the digital transition ..
-      _cycleCount > duty)       // .. but we would end up past that point with the new duty ..
-    _cycleCount = duty;         // .. so set the count to the new transition point
+  if (_cycleCount <= _pwmDuty && // the current count has not yet caused the digital transition ..
+      _cycleCount > duty)        // .. but we would end up past that point with the new duty ..
+    _cycleCount = duty;          // .. so set the count to the new transition point
 
   _pwmDuty = duty;  // save the new value
 }

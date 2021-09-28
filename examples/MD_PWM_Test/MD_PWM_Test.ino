@@ -84,7 +84,7 @@ void modeSweep(void)
   switch (state)
   {
   case 0:
-    Serial.println(counter);
+    //Serial.println(counter);
     pwm[0].write(counter);
     counter += delta;
     timeStart = millis();
@@ -116,6 +116,16 @@ void loop(void)
       Serial.print("\nEncoder\n");
       mode = M_ENC;
     }
+  }
+  else if (S.read() == MD_UISwitch::KEY_LONGPRESS)
+  {
+    Serial.print("\nDisabling");
+    pwm[0].disable();
+  }
+  else if (S.read() == MD_UISwitch::KEY_DPRESS)
+  {
+    Serial.print("\nEnabling");
+    if (!pwm[0].enable()) Serial.print(" - error");
   }
 
   // do according to mode

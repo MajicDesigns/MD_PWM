@@ -99,6 +99,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
+Sep 2021 ver 1.0.5
+- Reorganized instance functionality for efficiency
+
 Sep 2021 ver 1.0.4
 - Fixed reported glitch in setPin() caused by duty/cycle boundaries
 - Expanded Test example functionality

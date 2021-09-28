@@ -37,7 +37,7 @@ bool MD_PWM::begin(uint16_t freq)
   // Set up global data and hardware
   if (!_bInitialised)
   {
-    PWMPRINTS(" ... initialising");
+    PWMPRINTS(" ... initializing");
     for (uint8_t i = 0; i < MAX_PWM_PIN; i++)
       _cbInstance[i] = nullptr;
 
@@ -57,12 +57,12 @@ bool MD_PWM::begin(uint16_t freq)
 
 void MD_PWM::write(uint8_t duty)
 {
-  // The duty point may be move to before our current cycle count.
-  // In this case, we need to make some adjustments to the cyclecount 
-  // to compensate for the step shift and keep somwhat smooth PWM output.
+  // The duty point may move to before our current cycle count.
+  // In this case, we need to make some adjustments to the cycle count 
+  // to compensate for the shift and try to keep somewhat smooth PWM output.
   if (_cycleCount < _pwmDuty && // the current count has not yet caused the digital transition ..
-      _cycleCount >= duty)      // .. but we would end up past that point with the new duty ..
-    _cycleCount = duty;         // .. set the count to the new transition point
+      _cycleCount > duty)       // .. but we would end up past that point with the new duty ..
+    _cycleCount = duty;         // .. so set the count to the new transition point
 
   _pwmDuty = duty;  // save the new value
 }
@@ -77,9 +77,11 @@ bool MD_PWM::enable(void)
   {
     if (_cbInstance[i] == nullptr)
     {
+      PWMPRINT("\nEnabling [", i);
+      PWMPRINT("] for pin ", _pin);
       found = true;
       _cbInstance[i] = this;  // save ourselves in this slot
-      _pinCount++;        // one less pin to allocate
+      _pinCount++;        // one less pin available to allocate
       _cycleCount = 0;    // initialize the counter for the pin
       write(0);           // initialize the duty cycle
       break;
@@ -90,14 +92,24 @@ bool MD_PWM::enable(void)
 }
 
 void MD_PWM::disable(void)
-// disable the PWM on the pin instance
+// Disable the PWM on the pin instance
+// Shuffle the instance table entries up to squish out empty slots
 {
   for (uint8_t i = 0; i < MAX_PWM_PIN; i++)
   {
     if (_cbInstance[i] == this)
     {
-      _cbInstance[i] = nullptr;         // erase ourselves from the slot
-      if (_pinCount > 0) _pinCount--;   // one slot is now free
+      PWMPRINT("\nDisabling [", i);
+      PWMPRINT("] for pin ", _pin);
+
+      noInterrupts();   // stop IRQs that may access this table while reorganizing
+      
+      for (uint8_t j=i+1; j<MAX_PWM_PIN; j++)
+        _cbInstance[i] = _cbInstance[j];      // shuffle along
+      _cbInstance[MAX_PWM_PIN-1] = nullptr;   // clear the last one
+      if (_pinCount > 0) _pinCount--;         // one slot is now free
+      
+      interrupts();     // IRQs can access again
       break;
     }
   }
@@ -125,7 +137,11 @@ ISR(TIMER2_OVF_vect)
 #endif
 {
   for (uint8_t i = 0; i < MD_PWM::MAX_PWM_PIN; i++)
-    if (MD_PWM::_cbInstance[i] != nullptr) MD_PWM::_cbInstance[i]->setPin();
+  {
+    if (MD_PWM::_cbInstance[i] == nullptr)
+      break;      // done the last one the prior loop
+    MD_PWM::_cbInstance[i]->setPin();
+  }
 }
 
 inline void MD_PWM::setTimerMode(void)

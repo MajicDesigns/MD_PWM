@@ -55,6 +55,19 @@ bool MD_PWM::begin(uint16_t freq)
   return(enable());
 }
 
+void MD_PWM::write(uint8_t duty)
+{
+  // The duty point may be move to before our current cycle count.
+  // In this case, we need to make some adjustments to the cyclecount 
+  // to compensate for the step shift and keep somwhat smooth PWM output.
+  if (_cycleCount < _pwmDuty && // the current count has not yet caused the digital transition ..
+      _cycleCount >= duty)      // .. but we would end up past that point with the new duty ..
+    _cycleCount = duty;         // .. set the count to the new transition point
+
+  _pwmDuty = duty;  // save the new value
+}
+
+
 bool MD_PWM::enable(void)
 // Enable the PWM on the pin instance
 {
@@ -111,11 +124,8 @@ ISR(TIMER1_OVF_vect)
 ISR(TIMER2_OVF_vect)
 #endif
 {
-  if (MD_PWM::_pinCount)      // only do this if there are pins to process
-  {
-    for (uint8_t i = 0; i < MD_PWM::MAX_PWM_PIN; i++)
-      if (MD_PWM::_cbInstance[i] != nullptr) MD_PWM::_cbInstance[i]->setPin();
-  }
+  for (uint8_t i = 0; i < MD_PWM::MAX_PWM_PIN; i++)
+    if (MD_PWM::_cbInstance[i] != nullptr) MD_PWM::_cbInstance[i]->setPin();
 }
 
 inline void MD_PWM::setTimerMode(void)

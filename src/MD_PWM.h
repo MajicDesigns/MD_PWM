@@ -99,8 +99,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
-Sep 2021 ver xxx
-- Fixed reported glitch in setPin()
+Sep 2021 ver 1.0.4
+- Fixed reported glitch in setPin() caused by duty/cycle boundaries
+- Expanded Test example functionality
 
 Sep 2021 ver 1.0.3
 - disable() now called in destructor
@@ -208,7 +209,7 @@ class MD_PWM
    *
    * \param duty the PWM duty cycle [0..255].
    */
-    inline void write(uint8_t duty) { _pwmDuty = duty; if(_cycleCount >= _pwmDuty) _cycleCount = _pwmDuty; }
+   void write(uint8_t duty);
 
   /**
    * Disable PWM output for this pin.
@@ -244,9 +245,9 @@ private:
 
 #endif
 
-    uint8_t _pin;         // PWM digital pin
+    uint8_t _pin;                  // PWM digital pin
     volatile uint8_t _pwmDuty;     // PWM duty set point
-    volatile uint8_t _cycleCount;  // PWM current cycle count
+    volatile uint8_t _cycleCount;  // PWM current cycle counter
 
     void setFrequency(uint32_t freq); // set TIMER frequency
     inline void setTimerMode(void);   // set TIMER mode

@@ -1,26 +1,27 @@
 #include <MD_PWM.h>
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-
 /**
  * \file
  * \brief Code file for MD_PWM library class.
  */
 
 // Global data
-bool MD_PWM::_bInitialised = false;
-volatile uint8_t MD_PWM::_pinCount;
+bool MD_PWM::_bInitialised = false;       
+uint8_t MD_PWM::_cycleCount = 0;
 MD_PWM* MD_PWM::_cbInstance[MAX_PWM_PIN];
 
 MD_PWM::MD_PWM(uint8_t pin) : _pin(pin)
-{ };
+{ 
+#if USE_DIRECT_IO
+  _outReg = portOutputRegister(digitalPinToPort(pin)); // output pin register
+  _outRegMask = digitalPinToBitMask(pin);              // mask for pin in that register
+#endif
+};
 
 MD_PWM::~MD_PWM(void) 
 // Last one out the door turns out the lights
 { 
-  disable();
-  if (_pinCount == 0)
+  if (disable())
   {
     stop();
     detachISR();
@@ -37,11 +38,10 @@ bool MD_PWM::begin(uint16_t freq)
   // Set up global data and hardware
   if (!_bInitialised)
   {
+    // once only initialisation for all instances
     PWMPRINTS(" ... initializing");
     for (uint8_t i = 0; i < MAX_PWM_PIN; i++)
       _cbInstance[i] = nullptr;
-
-    _pinCount = 0;    // we have no pins globally allocated yet
 
     setTimerMode();
     setFrequency(freq);
@@ -55,19 +55,6 @@ bool MD_PWM::begin(uint16_t freq)
   return(enable());
 }
 
-void MD_PWM::write(uint8_t duty)
-{
-  // The duty point may move to before our current cycle count.
-  // In this case, we need to make some adjustments to the cycle count 
-  // to compensate for the shift and try to keep somewhat smooth PWM output.
-  if (_cycleCount <= _pwmDuty && // the current count has not yet caused the digital transition ..
-      _cycleCount > duty)        // .. but we would end up past that point with the new duty ..
-    _cycleCount = duty;          // .. so set the count to the new transition point
-
-  _pwmDuty = duty;  // save the new value
-}
-
-
 bool MD_PWM::enable(void)
 // Enable the PWM on the pin instance
 {
@@ -80,10 +67,8 @@ bool MD_PWM::enable(void)
       PWMPRINT("\nEnabling [", i);
       PWMPRINT("] for pin ", _pin);
       found = true;
-      _cbInstance[i] = this;  // save ourselves in this slot
-      _pinCount++;        // one less pin available to allocate
-      _cycleCount = 0;    // initialize the counter for the pin
-      write(0);           // initialize the duty cycle
+      _cbInstance[i] = this;      // save ourselves in this slot
+      _pwmDuty = _pwmDutySP = 0;  // initialize the duty cycle(s)
       break;
     }
   }
@@ -91,7 +76,7 @@ bool MD_PWM::enable(void)
   return(found);
 }
 
-void MD_PWM::disable(void)
+bool MD_PWM::disable(void)
 // Disable the PWM on the pin instance
 // Shuffle the instance table entries up to squish out empty slots
 {
@@ -107,22 +92,37 @@ void MD_PWM::disable(void)
       for (uint8_t j=i+1; j<MAX_PWM_PIN; j++)
         _cbInstance[i] = _cbInstance[j];      // shuffle along
       _cbInstance[MAX_PWM_PIN-1] = nullptr;   // clear the last one
-      if (_pinCount > 0) _pinCount--;         // one slot is now free
       
       interrupts();     // IRQs can access again
       break;
     }
   }
+
+  return(_cbInstance[0] == nullptr);    // table is empty, last instance gone
 }
 
 void MD_PWM::setPin(void)
 // Handle the PWM counting and timing digital transitions
+// This is called as part of the ISR instance handling
 {
-  if (_cycleCount == 0 && _pwmDuty != 0)
-    digitalWrite(_pin, HIGH);
-  if (_cycleCount == _pwmDuty && _pwmDuty != 0xff)
+  if (_cycleCount == 0)
+  {
+    _pwmDuty = _pwmDutySP;    // set up new duty cycle if changed
+    if (_pwmDuty != 0)
+#if USE_DIRECT_IO
+      *_outReg |= _outRegMask;
+#else
+      digitalWrite(_pin, HIGH);
+#endif
+  }
+  else if (_cycleCount == _pwmDuty && _pwmDuty != 0xff)
+  {
+#if USE_DIRECT_IO
+    *_outReg &= ~_outRegMask;
+#else
     digitalWrite(_pin, LOW);
-  _cycleCount++;   // 8 bit unsigned counter will simply roll over at 255
+#endif
+  }
 }
 
 // -------------------------------------------------------------
@@ -139,9 +139,10 @@ ISR(TIMER2_OVF_vect)
   for (uint8_t i = 0; i < MD_PWM::MAX_PWM_PIN; i++)
   {
     if (MD_PWM::_cbInstance[i] == nullptr)
-      break;      // done the last one the prior loop
+      break;      // None left - just exit
     MD_PWM::_cbInstance[i]->setPin();
   }
+  MD_PWM::_cycleCount++;
 }
 
 inline void MD_PWM::setTimerMode(void)

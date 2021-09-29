@@ -28,7 +28,7 @@ MD_UISwitch_Digital S(ENC_SW);
 
 MD_PWM pwm[] = { MD_PWM(5), MD_PWM(7), MD_PWM(8), MD_PWM(9), MD_PWM(10) };
 const uint16_t PWM_FREQ = 50;    // in Hz
-const uint8_t SWEEP_DELAY = 40;  // milliseconds
+const uint8_t SWEEP_DELAY = 10;  // milliseconds
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 

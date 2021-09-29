@@ -39,9 +39,9 @@ One solution is to change hardware to a processor with more PWM pins.
 Another is to create a PWM solution that uses software to drive the pins.
 
 This second option is feasible, especially when the PWM signal needed is 
-relatively low frequency. The downside is that the CPU is used process the 
-timer interrupt and toggle the PWM digital output, taking processing time 
-away from other tasks.
+relatively low frequency. The downside is that the CPU is used to process 
+the timer interrupt and toggle the PWM digital output, reducing the processing 
+time available for other tasks.
 
 The original use case for this library was for PWM speed control of brushed DC 
 motors. The default Arduino Uno/Nano PWM frequency is 490.2 Hz for pins 3, 9,
@@ -65,8 +65,8 @@ This is illustrated below.
 ![PWM Timing Diagram] (PWM_Timing.png "PWM Timing Diagram")
 
 The duty cycle can be changed very smoothly by changing the set point at which 
-the digital transition occurs. The new duty cycle takes effect at the next 
-PWM digital transition.
+the digital transition occurs. The new duty cycle takes effect at the start 
+of the next PWM transition.
 
 TIMERn is a global resource, so each object instance of class is driven from the
 same TIMERn interrupt. The constant MAX_PWM_PIN is used to set limits the
@@ -99,6 +99,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
+Sep 2021 ver 1.1.0
+- Implemented direct I/O efficiency options suggested by rhormigo (github issue #1)
+- Implemented global cycle counting suggested by rhormigo (github issue #1)
+
 Sep 2021 ver 1.0.6
 - Final resolution of setPin() issue
 
@@ -106,7 +110,7 @@ Sep 2021 ver 1.0.5
 - Reorganized instance functionality for efficiency
 
 Sep 2021 ver 1.0.4
-- Fixed reported glitch in setPin() caused by duty/cycle boundaries
+- Fixed reported glitch in setPin() caused by duty/cycle boundaries (github issue #1)
 - Expanded Test example functionality
 
 Sep 2021 ver 1.0.3
@@ -131,6 +135,10 @@ Mar 2021 ver 1.0.0
 
 #ifndef PWMDEBUG
 #define PWMDEBUG 0      ///< 1 turns debug output on
+#endif
+
+#ifndef USE_DIRECT_IO
+#define USE_DIRECT_IO 1 ///< Use direct port I/O for faster digital writes
 #endif
 
 #ifndef USE_TIMER
@@ -215,7 +223,7 @@ class MD_PWM
    *
    * \param duty the PWM duty cycle [0..255].
    */
-   void write(uint8_t duty);
+    void write(uint8_t duty) { _pwmDutySP = duty; }
 
   /**
    * Disable PWM output for this pin.
@@ -225,8 +233,10 @@ class MD_PWM
    * which can be reused for another pin if needed.
    * 
    * \sa enable()
+   * 
+   * \return true if this is the last instance to be disabled
    */
-    void disable(void);
+    bool disable(void);
 
   /**
    * Enables PWM output for this pin.
@@ -252,8 +262,12 @@ private:
 #endif
 
     uint8_t _pin;                  // PWM digital pin
-    volatile uint8_t _pwmDuty;     // PWM duty set point
-    volatile uint8_t _cycleCount;  // PWM current cycle counter
+#if USE_DIRECT_IO
+    volatile uint8_t *_outReg;     // output port register for fast writing
+    volatile uint8_t _outRegMask;  // output pin in port register for fast writing
+#endif
+    volatile uint8_t _pwmDuty;     // PWM duty current value point
+    volatile uint8_t _pwmDutySP;   // PWM duty setpoint
 
     void setFrequency(uint32_t freq); // set TIMER frequency
     inline void setTimerMode(void);   // set TIMER mode
@@ -263,7 +277,7 @@ private:
 
 public:
   static bool _bInitialised;          ///< ISR - Global vector initialization flag
-  static volatile uint8_t _pinCount;  ///< ISR - Number of pins currently configured
+  static uint8_t _cycleCount;         ///< ISR - Global counter
   static MD_PWM* _cbInstance[];       ///< ISR - Callback instance handle per pin slot
 
   //--------------------------------------------------------------

@@ -27,10 +27,7 @@ var NAVTREEINDEX0 =
 "functions_vars.html":[1,2,2],
 "globals.html":[2,1,0],
 "globals_defs.html":[2,1,1],
-"index.html":[0],
 "index.html":[],
-"page_copyright.html":[0,2],
-"page_donation.html":[0,1],
-"page_revision_history.html":[0,0],
+"index.html":[0],
 "pages.html":[]
 };

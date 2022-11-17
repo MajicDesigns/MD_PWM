@@ -1,7 +1,7 @@
 /*
 * Simple program to test MD_PWM functions.
 * 
-* Rotary Encoder connected to A0 can be used to vary the PWM 
+* Rotary Encoder connected to ENC_* pins can be used to vary the PWM 
 * output of class instance pins specified in the pwm array.
 * Encoder value is echoed to the Serial monitor.
 * Switch between encoder setting and sweep mode by pressing on the 
@@ -73,20 +73,17 @@ void modeEncoder(void)
   }
 }
 
-void modeSweep(void)
+void modeSweep(int8_t direction)
 {
   static uint8_t state = 0, counter = 255;
-  static uint8_t delta = -1;
   static uint32_t timeStart;
-
-  readEncoder(delta);
 
   switch (state)
   {
   case 0:
     //Serial.println(counter);
     pwm[0].write(counter);
-    counter += delta;
+    counter += direction;
     timeStart = millis();
     state = 1;
     break;
@@ -101,28 +98,25 @@ void modeSweep(void)
 
 void loop(void)
 {
-  static enum { M_ENC, M_SWEEP } mode = M_ENC;
+  static enum { M_ENC, M_SWP_UP, M_SWP_DWN } mode = M_ENC;
+  MD_UISwitch::keyResult_t k = S.read();
 
   // check the switch and change mode
-  if (S.read() == MD_UISwitch::KEY_PRESS)
+  if (k == MD_UISwitch::KEY_PRESS)
   {
-    if (mode == M_ENC)
+    switch (mode)
     {
-      Serial.print("\nSweep\n");
-      mode = M_SWEEP;
-    }
-    else
-    {
-      Serial.print("\nEncoder\n");
-      mode = M_ENC;
+    case M_ENC:    Serial.print("\n-> Swp Up\n");  mode = M_SWP_UP;   break;
+    case M_SWP_UP: Serial.print("\n-> Swp Dwn\n"); mode = M_SWP_DWN;  break;
+    default:       Serial.print("\n-> Encoder\n"); mode = M_ENC;      break;
     }
   }
-  else if (S.read() == MD_UISwitch::KEY_LONGPRESS)
+  else if (k == MD_UISwitch::KEY_LONGPRESS)
   {
     Serial.print("\nDisabling");
     pwm[0].disable();
   }
-  else if (S.read() == MD_UISwitch::KEY_DPRESS)
+  else if (k == MD_UISwitch::KEY_DPRESS)
   {
     Serial.print("\nEnabling");
     if (!pwm[0].enable()) Serial.print(" - error");
@@ -131,7 +125,8 @@ void loop(void)
   // do according to mode
   switch (mode)
   {
-    case M_SWEEP: modeSweep();   break;
-    case M_ENC:   modeEncoder(); break;
+    case M_SWP_UP:  modeSweep(1);   break;
+    case M_SWP_DWN: modeSweep(-1);   break;
+    case M_ENC:     modeEncoder(); break;
   }
 }

@@ -115,7 +115,7 @@ void MD_PWM::setPin(void)
       digitalWrite(_pin, HIGH);
 #endif
   }
-  else if (_cycleCount == _pwmDuty && _pwmDuty != 0xff)
+  else if (_cycleCount == _pwmDuty && _pwmDutySP != 0xff)
   {
 #if USE_DIRECT_IO
     *_outReg &= ~_outRegMask;

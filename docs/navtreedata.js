@@ -25,7 +25,7 @@
 var NAVTREE =
 [
   [ "Software PWM", "index.html", [
-    [ "Any pin PWM Library", "index.html", "index" ],
+    [ "Any pin PWM Library", "index.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],

@@ -62,7 +62,7 @@ and, depending on where it is in the cycle, allows the software to set the
 digital output pin to LOW or HIGH, thus creating the desired PWM signal. 
 This is illustrated below.
 
-![PWM Timing Diagram] (PWM_Timing.png "PWM Timing Diagram")
+\image{inline} html PWM_Timing.png "PWM Timing Diagram"
 
 The duty cycle can be changed very smoothly by changing the set point at which 
 the digital transition occurs. The new duty cycle takes effect at the start 
@@ -99,6 +99,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 \page pageRevisionHistory Revision History
+Nov 2022 ver 1.1.1
+- Fixed reported problem going from PWM 255 to 0
+- Modified Test example
+
 Sep 2021 ver 1.1.0
 - Implemented direct I/O efficiency options suggested by rhormigo (github issue #1)
 - Implemented global cycle counting suggested by rhormigo (github issue #1)
